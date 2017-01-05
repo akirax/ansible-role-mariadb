@@ -1,0 +1,5 @@
+---
+# MariaDB handlers
+
+- name: update apt cache
+  apt: update_cache=yes

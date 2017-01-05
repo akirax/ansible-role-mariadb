@@ -1,0 +1,7 @@
+keyserver_fingerprint: "0xF1656F24C74CD1D8"
+mirror: nyc2.mirrors.digitalocean.com
+mariadb_version: "10.2"
+ansible_distribution_release: "xenial"
+mysql_root_password: "mysqlroot"
+mysql_user: "mysqluser"
+mysql_user_password: "mysqluser"

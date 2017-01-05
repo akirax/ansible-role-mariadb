@@ -1,0 +1,71 @@
+---
+# Add MariaDB tasks
+
+- name: Add MariaDB MySQL apt-key
+  command: sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 {{ keyserver_fingerprint }}
+  tags: mariadb
+
+- name: Add MariaDB MySQL deb and deb-src
+  apt_repository: repo="{{ item }}" state=present
+  with_items:
+  - "deb http://{{ mirror }}/mariadb/repo/{{ mariadb_version }}/ubuntu {{ ansible_distribution_release }} main"
+  - "deb-src http://{{ mirror }}/mariadb/repo/{{ mariadb_version }}/ubuntu {{ ansible_distribution_release }} main"
+  notify: update apt cache
+  tags: mariadb
+
+- name: Install MariaDB server and client
+  apt:
+    pkg: "{{ item }}"
+    state: latest
+    update_cache: yes
+    cache_valid_time: 600
+  with_items:
+    - mariadb-server
+    - mariadb-client
+  tags: mariadb
+
+- name: Copy my.conf to server
+  copy: src=my.conf dest=/etc/mysql/my.cnf
+
+- name: Delete the old my.cnf
+  command: rm /etc/my.cfg removes=/etc/my.cfg
+
+- name: Start MariaDB MySQL Server
+  service: name=mysql state=started enabled=true
+  tags: mariadb
+
+- name: Set root user password
+  mysql_user: name=root
+              password="{{ mysql_root_password }}"
+              check_implicit_admin=yes
+              login_user=root
+              login_password="{{ mysql_root_password }}"
+              state=present
+  with_items:
+    - "{{ ansible_hostname }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
+  tags: mariadb
+
+- name: Delete anonymous MySQL server user for current hostname
+  mysql_user: user=""
+              host="{{ ansible_hostname }}"
+              state=absent
+              login_user=root
+              login_password="{{ mysql_root_password }}"
+  tags: mariadb
+
+- name: Delete anonymous MySQL server user for localhost
+  mysql_user: user=""
+              state=absent
+              login_user=root
+              login_password="{{ mysql_root_password }}"
+  tags: mariadb
+
+- name: Remove the test database
+  mysql_db: name=test
+            state=absent
+            login_user=root
+            login_password="{{ mysql_root_password }}"
+  tags: mariadb
